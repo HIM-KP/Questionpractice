@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Looped Timer with Chime and Counter</title>
+  <style>
+    body {
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: "Segoe UI", sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    #timer {
+      font-size: 4.5rem;
+      font-weight: bold;
+      margin-bottom: 2rem;
+    }
+
+    .settings {
+      background: #161b22;
+      border-radius: 10px;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 0 10px rgba(255,255,255,0.05);
+    }
+
+    label {
+      font-size: 1rem;
+    }
+
+    input {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      color: #e6edf3;
+      padding: 0.4rem 0.8rem;
+      border-radius: 5px;
+      width: 70px;
+      text-align: center;
+    }
+
+    button {
+      background: #238636;
+      border: none;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.2s;
+      font-weight: 600;
+    }
+
+    button:hover {
+      background: #2ea043;
+    }
+
+    #playPauseBtn {
+      background: #8957e5;
+    }
+
+    #playPauseBtn:hover {
+      background: #a371f7;
+    }
+
+    .hint {
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
+
+    /* Top-right counter */
+    .counter {
+      position: absolute;
+      top: 20px;
+      right: 25px;
+      text-align: right;
+    }
+
+    .counter h2 {
+      font-size: 1rem;
+      color: #8b949e;
+      margin: 0;
+    }
+
+    .counter p {
+      font-size: 2rem;
+      font-weight: bold;
+      margin: 0;
+      color: #e6edf3;
+    }
+  </style>
+</head>
+<body>
+  <div class="counter">
+    <h2>Questions Attempted</h2>
+    <p id="attemptCount">0</p>
+  </div>
+
+  <h1>Looped Timer</h1>
+  <div id="timer">00:00</div>
+
+  <div class="settings">
+    <label>Duration (min):</label>
+    <input type="number" id="durationInput" value="1" min="0.1" step="0.1">
+    <button id="applyBtn">Apply</button>
+    <button id="playPauseBtn">Pause</button>
+  </div>
+
+  <div class="hint">Press <b>Spacebar</b> to restart the timer</div>
+
+  <!-- Hidden audio element for chime -->
+  <audio id="chimeSound" preload="auto">
+    <source src="https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg" type="audio/ogg">
+  </audio>
+
+  <script>
+    let duration = 1 * 60; // default seconds
+    let timeLeft = duration;
+    let interval;
+    let isRunning = true;
+    let loopsCompleted = 0;
+    let spacePressed = 0;
+
+    const timerDisplay = document.getElementById('timer');
+    const durationInput = document.getElementById('durationInput');
+    const applyBtn = document.getElementById('applyBtn');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const chimeSound = document.getElementById('chimeSound');
+    const attemptCount = document.getElementById('attemptCount');
+
+    function updateDisplay() {
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      timerDisplay.textContent = 
+        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function updateCounter() {
+      attemptCount.textContent = loopsCompleted + spacePressed;
+    }
+
+    function playShortChime() {
+      chimeSound.currentTime = 0;
+      chimeSound.play();
+      setTimeout(() => {
+        chimeSound.pause();
+        chimeSound.currentTime = 0;
+      }, 2000); // Play sound for 2 seconds
+    }
+
+    function startTimer() {
+      clearInterval(interval);
+      isRunning = true;
+      playPauseBtn.textContent = "Pause";
+      interval = setInterval(() => {
+        if (isRunning) {
+          timeLeft--;
+          if (timeLeft < 0) {
+            playShortChime();
+            timeLeft = duration;
+            loopsCompleted++;
+            updateCounter();
+          }
+          updateDisplay();
+        }
+      }, 1000);
+    }
+
+    // Toggle play/pause
+    playPauseBtn.addEventListener('click', () => {
+      isRunning = !isRunning;
+      playPauseBtn.textContent = isRunning ? "Pause" : "Play";
+    });
+
+    // Apply new duration
+    applyBtn.addEventListener('click', () => {
+      duration = Math.max(0.1, parseFloat(durationInput.value)) * 60;
+      timeLeft = duration;
+      updateDisplay();
+      startTimer();
+    });
+
+    // Spacebar to restart
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        timeLeft = duration;
+        updateDisplay();
+        spacePressed++;
+        updateCounter();
+      }
+    });
+
+    // Initialize
+    updateDisplay();
+    updateCounter();
+    startTimer();
+  </script>
+</body>
+</html>
